@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  emqx:
+    image: emqx/emqx:latest
+    container_name: emqx
+    restart: unless-stopped
+    ports:
+      - "1883:1883"     # MQTT (TCP)
+      - "8883:8883"     # MQTT over TLS
+      - "8083:8083"     # MQTT over WebSocket (ws)
+      - "8084:8084"     # MQTT over WebSocket (wss)
+      - "18083:18083"   # EMQX Dashboard
+    environment:
+      # ชื่อ container/node (ไม่บังคับ แต่ช่วยให้อ่านได้)
+      - EMQX_NAME=emqx
+      # ตัวอย่างการโหลด plugin (dashboard มักโหลดมาแล้วใน image ปกติ)
+      - EMQX_LOADED_PLUGINS=emqx_dashboard
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_log:/opt/emqx/log
+    networks:
+      - emqxnet
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: node-red
+    restart: unless-stopped
+    ports:
+      - "1880:1880"     # Node-RED UI
+    environment:
+      - TZ=Asia/Bangkok
+    volumes:
+      - node_red_data:/data
+    depends_on:
+      - emqx
+    networks:
+      - emqxnet
+
+volumes:
+  emqx_data:
+  emqx_log:
+  node_red_data:
+
+networks:
+  emqxnet:
+    driver: bridge
